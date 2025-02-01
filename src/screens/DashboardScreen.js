@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { setInterval, clearInterval } from "react-native";
+import { EventTypes } from "../utils/eventTypes";
+import { EventNames } from "../utils/eventNames";
 import {
   View,
   Text,
@@ -12,279 +13,157 @@ import {
 import { supabase } from "../services/supabase";
 
 const STATUS_COLORS = {
-  "Not Checked In": "#FF3B30",
-  Working: "#34C759",
-  "On Break": "#FF9500",
-  "Checked Out": "#8E8E93",
+  [EventTypes.CHECK_IN]: "#81C27A",
+  [EventTypes.BREAK_START]: "#CCC185",
+  [EventTypes.BREAK_END]: "#81C27A",
+  [EventTypes.CHECK_OUT]: "#D4F4FA",
+  default: "#F8F9FA",
 };
 
 export default function DashboardScreen({ route }) {
   const { userId, username } = route.params;
-
-  const [status, setStatus] = useState("Loading...");
+  const [currentEventType, setCurrentEventType] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [timeElapsed, setTimeElapsed] = useState("00:00:00");
-  const [dailySummary, setDailySummary] = useState({
-    workHours: 0,
-    breakHours: 0,
-  });
+  const [bgColor, setBgColor] = useState(STATUS_COLORS.default);
 
-  const fetchCurrentStatus = useCallback(async () => {
+  const updateStatus = useCallback(async () => {
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from("events")
-        .select("event_type")
+        .select("type")
         .eq("user_id", userId)
-        .order("event_time", { ascending: false })
+        .order("time", { ascending: false })
         .limit(1);
 
       if (error) throw error;
 
-      if (!data || data.length === 0) {
-        setStatus("Not Checked In");
-      } else {
-        updateStatus(data[0].event_type);
-      }
+      const latestType = data?.[0]?.type;
+      setCurrentEventType(latestType);
+      setBgColor(
+        latestType ? STATUS_COLORS[latestType] : STATUS_COLORS.default
+      );
     } catch (error) {
       Alert.alert("Error", error.message);
+    } finally {
+      setLoading(false);
     }
   }, [userId]);
-
-  const updateStatus = (eventType) => {
-    const statusMap = {
-      check_in: "Working",
-      break_start: "On Break",
-      break_end: "Working",
-      check_out: "Checked Out",
-    };
-    setStatus(statusMap[eventType] || "Unknown Status");
-  };
 
   const handleEvent = async (eventType) => {
     try {
       setLoading(true);
-      Alert.alert("Atención", "Todavía no se puede fichar");
-      /*
-      const { data: lastEvent } = await supabase
-        .from("events")
-        .select("event_type")
-        .eq("user_id", userId)
-        .order("event_time", { ascending: false })
-        .limit(1);
-
-      const lastEventType = lastEvent?.[0]?.event_type;
-      validateWorkflow(lastEventType, eventType);
-
       const { error } = await supabase.from("events").insert([
         {
           user_id: userId,
-          event_type: eventType,
-          event_time: new Date().toISOString(),
+          type: eventType,
+          time: new Date().toISOString(),
         },
       ]);
 
       if (error) throw error;
-
-      await Promise.all([fetchCurrentStatus(), fetchDailySummary()]);
-      */
+      await updateStatus();
     } catch (error) {
-      console.error("Error handling event:", error);
       Alert.alert("Error", error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const validateWorkflow = (lastEventType, newEventType) => {
-    const invalidFlows = {
-      break_start: lastEventType !== "check_in",
-      break_end: lastEventType !== "break_start",
-      check_out: !["check_in", "break_end"].includes(lastEventType),
-    };
-
-    if (invalidFlows[newEventType]) {
-      throw new Error("Acción no permitida en el flujo actual");
-    }
-  };
-
-  const fetchDailySummary = useCallback(async () => {
-    try {
-      const today = new Date().toISOString().split("T")[0];
-      const { data } = await supabase
-        .from("events")
-        .select("*")
-        .eq("user_id", userId)
-        .gte("event_time", `${today}T00:00:00`)
-        .lte("event_time", `${today}T23:59:59`)
-        .order("event_time", { ascending: true });
-
-      let totalWork = 0;
-      let totalBreaks = 0;
-      let currentStart = null;
-
-      data?.forEach((event, index) => {
-        const eventTime = new Date(event.event_time);
-
-        if (["check_in", "break_end"].includes(event.event_type)) {
-          currentStart = eventTime;
-        } else if (currentStart) {
-          const diff = (eventTime - currentStart) / 1000;
-
-          if (event.event_type === "break_start") {
-            totalWork += diff;
-          } else if (event.event_type === "check_out") {
-            totalWork += diff;
-          } else if (event.event_type === "break_end") {
-            totalBreaks += diff;
-          }
-
-          currentStart = null;
-        }
-      });
-
-      setDailySummary({
-        workHours: (totalWork / 3600).toFixed(1),
-        breakHours: (totalBreaks / 3600).toFixed(1),
-      });
-    } catch (error) {
-      console.error("Error fetching summary:", error);
-    }
-  }, [userId]);
-
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        await fetchCurrentStatus();
-        await fetchDailySummary();
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        Alert.alert("Error", error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    updateStatus();
 
     const subscription = supabase
-      .channel("real-time-events")
+      .channel("events-channel")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "events" },
-        (payload) => {
-          if (payload.new.user_id === userId) {
-            fetchCurrentStatus();
-            fetchDailySummary();
-          }
-        }
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "events",
+          filter: `user_id=eq.${userId}`,
+        },
+        updateStatus
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(subscription);
-    };
-  }, [userId, fetchCurrentStatus, fetchDailySummary]);
+    return () => supabase.removeChannel(subscription);
+  }, [updateStatus, userId]);
 
-  useEffect(() => {
-    let interval;
-    if (["Working", "On Break"].includes(status)) {
-      interval = setInterval(() => {
-        setTimeElapsed((prev) => {
-          const [h, m, s] = prev.split(":").map(Number);
-          const newSeconds = s + 1;
-          return `${String(
-            h + Math.floor((m + Math.floor(newSeconds / 60)) / 60)
-          ).padStart(2, "0")}:${String(
-            (m + Math.floor(newSeconds / 60)) % 60
-          ).padStart(2, "0")}:${String(newSeconds % 60).padStart(2, "0")}`;
-        });
-      }, 1000);
+  const renderActionButton = () => {
+    if (loading) return <ActivityIndicator size="large" />;
+
+    switch (currentEventType) {
+      case EventTypes.CHECK_IN:
+      case EventTypes.BREAK_END:
+        return (
+          <>
+            <ActionButton
+              text={EventNames.BREAK_START}
+              onPress={() => handleEvent(EventTypes.BREAK_START)}
+            />
+            <ActionButton
+              text={EventNames.CHECK_OUT}
+              onPress={() => handleEvent(EventTypes.CHECK_OUT)}
+              secondary
+            />
+          </>
+        );
+        return (
+          <>
+            <ActionButton
+              text={EventNames.BREAK_START}
+              onPress={() => handleEvent(EventTypes.BREAK_START)}
+            />
+            <ActionButton
+              text={EventNames.CHECK_OUT}
+              onPress={() => handleEvent(EventTypes.CHECK_OUT)}
+              secondary
+            />
+          </>
+        );
+      case EventTypes.BREAK_START:
+        return (
+          <ActionButton
+            text={EventNames.BREAK_END}
+            onPress={() => handleEvent(EventTypes.BREAK_END)}
+          />
+        );
+      default:
+        return (
+          <ActionButton
+            text={EventNames.CHECK_IN}
+            onPress={() => handleEvent(EventTypes.CHECK_IN)}
+          />
+        );
     }
-    return () => {
-      if (interval !== undefined) {
-        clearInterval(interval);
-      }
-    };
-  }, [status]);
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: bgColor }]}>
       <View style={styles.content}>
-        <Text style={styles.title}>{username}</Text>
-
-        <View style={styles.statusContainer}>
-          <Text style={styles.statusLabel}>Estado Actual:</Text>
-          <View
-            style={[
-              styles.statusBadge,
-              { backgroundColor: STATUS_COLORS[status] },
-            ]}
-          >
-            <Text style={styles.statusText}>{status}</Text>
-          </View>
-        </View>
-
-        {["Working", "On Break"].includes(status) && (
-          <Text style={styles.timer}>{timeElapsed}</Text>
-        )}
-
-        <View style={styles.buttonsContainer}>
-          {loading ? (
-            <ActivityIndicator size="large" color="#007AFF" />
-          ) : (
-            <>
-              {(status === "Not Checked In" || status === "Checked Out") && (
-                <ActionButton
-                  label="Fichar Entrada"
-                  onPress={() => handleEvent("check_in")}
-                  color={STATUS_COLORS.Working}
-                />
-              )}
-
-              {status === "Working" && (
-                <>
-                  <ActionButton
-                    label="Iniciar Pausa"
-                    onPress={() => handleEvent("break_start")}
-                    color={STATUS_COLORS["On Break"]}
-                  />
-                  <ActionButton
-                    label="Fichar Salida"
-                    onPress={() => handleEvent("check_out")}
-                    color={STATUS_COLORS["Checked Out"]}
-                  />
-                </>
-              )}
-
-              {status === "On Break" && (
-                <ActionButton
-                  label="Finalizar Pausa"
-                  onPress={() => handleEvent("break_end")}
-                  color={STATUS_COLORS.Working}
-                />
-              )}
-            </>
-          )}
-        </View>
+        <Text style={styles.title}>Hello, {username}! 👋 </Text>
+        <View style={styles.actionsContainer}>{renderActionButton()}</View>
       </View>
     </SafeAreaView>
   );
 }
 
-const ActionButton = ({ label, onPress, color }) => (
+const ActionButton = ({ text, onPress, secondary = false }) => (
   <TouchableOpacity
-    style={[styles.button, { backgroundColor: color }]}
+    style={[
+      styles.button,
+      secondary ? styles.secondaryButton : styles.primaryButton,
+    ]}
     onPress={onPress}
   >
-    <Text style={styles.buttonText}>{label}</Text>
+    <Text style={styles.buttonText}>{text}</Text>
   </TouchableOpacity>
 );
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F9FA",
   },
   content: {
     flex: 1,
@@ -293,45 +172,24 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    color: "#1A1A1A",
-    marginVertical: 20,
-  },
-  statusContainer: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  statusLabel: {
-    fontSize: 16,
-    color: "#666",
-    marginBottom: 8,
-  },
-  statusBadge: {
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-  },
-  statusText: {
-    fontSize: 18,
     fontWeight: "600",
-    color: "white",
-  },
-  timer: {
-    fontSize: 40,
-    fontWeight: "bold",
+    color: "#1E293B",
     textAlign: "center",
-    color: "#1A1A1A",
-    marginVertical: 20,
+    marginBottom: 30,
   },
-  buttonsContainer: {
-    marginTop: 20,
+  actionsContainer: {
+    gap: 12,
   },
   button: {
-    borderRadius: 10,
-    paddingVertical: 15,
-    marginVertical: 8,
+    borderRadius: 8,
+    paddingVertical: 16,
     alignItems: "center",
+  },
+  primaryButton: {
+    backgroundColor: "#3B82F6",
+  },
+  secondaryButton: {
+    backgroundColor: "#64748B",
   },
   buttonText: {
     color: "white",
