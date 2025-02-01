@@ -9,6 +9,13 @@ dist/
 web-build/
 expo-env.d.ts
 
+# ESLint
+.eslintcache
+
+# Logs
+npm-debug.log
+yarn-debug.log
+
 # Native
 *.orig.*
 *.jks
@@ -29,8 +36,8 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
+# Env
+.env
 
 # typescript
 *.tsbuildinfo
