@@ -1,17 +1,24 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from "react-native";
 
 export default function LoginScreen() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleLogin = () => {
-    if (username.trim() === '' || password.trim() === '') {
-      Alert.alert('Error', 'Please enter both username and password.');
+    if (username.trim() === "" || password.trim() === "") {
+      Alert.alert("Error", "Please enter both username and password.");
       return;
     }
     // TODO: Add login logic here
-    Alert.alert('Success', `Welcome, ${username}!`);
+    Alert.alert("Success", `Welcome, ${username}!`);
   };
 
   return (
@@ -41,39 +48,39 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F4F6F8',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F4F6F8",
     paddingHorizontal: 20,
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 40,
-    color: '#333',
+    color: "#333",
   },
   input: {
-    width: '100%',
+    width: "100%",
     height: 50,
-    backgroundColor: '#FFF',
+    backgroundColor: "#FFF",
     borderRadius: 8,
     paddingHorizontal: 15,
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: '#DDD',
+    borderColor: "#DDD",
   },
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     paddingVertical: 15,
     paddingHorizontal: 40,
     borderRadius: 8,
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
     marginTop: 10,
   },
   buttonText: {
-    color: '#FFF',
+    color: "#FFF",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
