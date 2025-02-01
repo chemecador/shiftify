@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { supabase } from "../services/supabase";
 
-export default function LoginScreen() {
+export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,8 +22,8 @@ export default function LoginScreen() {
     }
 
     const email = `${username}@shiftify.com`;
-
     setLoading(true);
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email,
@@ -33,9 +33,28 @@ export default function LoginScreen() {
       if (error) {
         Alert.alert("Login Failed", error.message);
       } else {
-        Alert.alert("Success", `Welcome, ${username}!`);
+        const user = data?.session?.user || data?.user;
+
+        if (!user) {
+          console.warn(
+            "No se encontró el usuario. data.user:",
+            data?.user,
+            "data.session.user:",
+            data?.session?.user
+          );
+          Alert.alert(
+            "Error",
+            "No se encontró el usuario en la respuesta de Supabase"
+          );
+          return;
+        }
+        navigation.replace("Dashboard", {
+          userId: user.id,
+          username: username,
+        });
       }
     } catch (err) {
+      console.log(err);
       Alert.alert("Error", "An unexpected error occurred.");
     } finally {
       setLoading(false);
