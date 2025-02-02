@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import PropTypes from "prop-types";
+import ShimmerPlaceHolder from "react-native-shimmer-placeholder";
 import { supabase } from "../services/supabase";
 import { EventNames } from "../utils/eventNames";
 
@@ -53,12 +54,16 @@ const RecentEvents = ({ userId, refreshKey }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Today&apos;s Events</Text>
-      {loading && <ActivityIndicator size="small" />}
-      {error && <Text style={styles.error}>Error: {error}</Text>}
-      {!loading && !error && events.length === 0 && (
+      {loading ? (
+        <>
+          <ShimmerPlaceHolder style={styles.shimmerRow} autoRun={true} />
+          <ShimmerPlaceHolder style={styles.shimmerRow} autoRun={true} />
+        </>
+      ) : error ? (
+        <Text style={styles.error}>Error: {error}</Text>
+      ) : events.length === 0 ? (
         <Text style={styles.noData}>No events recorded today</Text>
-      )}
-      {!loading &&
+      ) : (
         events.map((event, index) => (
           <View key={index} style={styles.item}>
             <Text style={styles.eventText}>
@@ -71,7 +76,8 @@ const RecentEvents = ({ userId, refreshKey }) => {
               })}
             </Text>
           </View>
-        ))}
+        ))
+      )}
     </View>
   );
 };
@@ -111,6 +117,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderBottomWidth: 0.5,
     borderBottomColor: "#ccc",
+    alignItems: "center",
   },
   eventText: {
     fontSize: 14,
@@ -119,6 +126,12 @@ const styles = StyleSheet.create({
   timeText: {
     fontSize: 12,
     color: "#666",
+  },
+  shimmerRow: {
+    width: "100%",
+    height: 30,
+    marginBottom: 10,
+    borderRadius: 4,
   },
 });
 

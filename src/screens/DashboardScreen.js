@@ -13,6 +13,7 @@ import useDashboard from "../hooks/useDashboard";
 import { EventTypes } from "../utils/eventTypes";
 import { EventNames } from "../utils/eventNames";
 import RecentEvents from "../components/RecentEvents";
+import EventButton from "../components/EventButton";
 
 export default function DashboardScreen({ route }) {
   const { userId, username } = route.params;
@@ -48,11 +49,11 @@ export default function DashboardScreen({ route }) {
       <>
         {isWorking && (
           <>
-            <ActionButton
+            <EventButton
               text={EventNames.BREAK_START}
               onPress={() => handleEvent(EventTypes.BREAK_START)}
             />
-            <ActionButton
+            <EventButton
               text={EventNames.CHECK_OUT}
               onPress={() => handleEvent(EventTypes.CHECK_OUT)}
               secondary
@@ -60,13 +61,13 @@ export default function DashboardScreen({ route }) {
           </>
         )}
         {isBreaking && (
-          <ActionButton
+          <EventButton
             text={EventNames.BREAK_END}
             onPress={() => handleEvent(EventTypes.BREAK_END)}
           />
         )}
         {isIdle && (
-          <ActionButton
+          <EventButton
             text={EventNames.CHECK_IN}
             onPress={() => handleEvent(EventTypes.CHECK_IN)}
           />
@@ -106,24 +107,6 @@ DashboardScreen.propTypes = {
       username: PropTypes.string.isRequired,
     }).isRequired,
   }).isRequired,
-};
-
-const ActionButton = ({ text, onPress, secondary = false }) => (
-  <TouchableOpacity
-    style={[
-      styles.button,
-      secondary ? styles.secondaryButton : styles.primaryButton,
-    ]}
-    onPress={onPress}
-  >
-    <Text style={styles.buttonText}>{text}</Text>
-  </TouchableOpacity>
-);
-
-ActionButton.propTypes = {
-  text: PropTypes.string.isRequired,
-  onPress: PropTypes.func.isRequired,
-  secondary: PropTypes.bool,
 };
 
 const styles = StyleSheet.create({
@@ -167,5 +150,3 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
-
-export { ActionButton };
