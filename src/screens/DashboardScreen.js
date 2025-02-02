@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -12,16 +12,27 @@ import PropTypes from "prop-types";
 import useDashboard from "../hooks/useDashboard";
 import { EventTypes } from "../utils/eventTypes";
 import { EventNames } from "../utils/eventNames";
+import RecentEvents from "../components/RecentEvents";
 
 export default function DashboardScreen({ route }) {
   const { userId, username } = route.params;
-  const { currentEventType, loading, bgColor, handleEvent } =
-    useDashboard(userId);
+  const {
+    currentEventType,
+    loading,
+    bgColor,
+    handleEvent: handleDashboardEvent,
+  } = useDashboard(userId);
+  const [refreshKey, setRefreshKey] = useState(0);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
 
   const handleLogout = () => {
     navigation.replace("Login");
+  };
+
+  const handleEvent = async (eventType) => {
+    await handleDashboardEvent(eventType);
+    setRefreshKey((prev) => prev + 1);
   };
 
   const renderActionButton = () => {
@@ -80,6 +91,9 @@ export default function DashboardScreen({ route }) {
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </View>
+
+      <RecentEvents userId={userId} refreshKey={refreshKey} />
+
       <View style={styles.actionsContainer}>{renderActionButton()}</View>
     </View>
   );
@@ -153,3 +167,5 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
+
+export { ActionButton };
