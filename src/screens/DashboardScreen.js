@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
 import PropTypes from "prop-types";
 import useDashboard from "../hooks/useDashboard";
 import { EventTypes } from "../utils/eventTypes";
@@ -17,6 +18,11 @@ export default function DashboardScreen({ route }) {
   const { currentEventType, loading, bgColor, handleEvent } =
     useDashboard(userId);
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
+
+  const handleLogout = () => {
+    navigation.replace("Login");
+  };
 
   const renderActionButton = () => {
     if (loading) return <ActivityIndicator size="large" />;
@@ -68,7 +74,12 @@ export default function DashboardScreen({ route }) {
         ...styles.content,
       }}
     >
-      <Text style={styles.title}>Hello, {username}! 👋 </Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Hello, {username}! 👋</Text>
+        <TouchableOpacity onPress={handleLogout}>
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
+      </View>
       <View style={styles.actionsContainer}>{renderActionButton()}</View>
     </View>
   );
@@ -106,12 +117,21 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "space-between",
   },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 30,
+  },
   title: {
     fontSize: 24,
     fontWeight: "600",
     color: "#1E293B",
-    textAlign: "center",
-    marginBottom: 30,
+  },
+  logoutText: {
+    color: "#3B82F6",
+    fontSize: 16,
+    fontWeight: "600",
   },
   actionsContainer: {
     gap: 12,
