@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { supabase } from "../services/supabase";
+import PropTypes from "prop-types";
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState("");
@@ -40,11 +41,11 @@ export default function LoginScreen({ navigation }) {
             "No se encontró el usuario. data.user:",
             data?.user,
             "data.session.user:",
-            data?.session?.user
+            data?.session?.user,
           );
           Alert.alert(
             "Error",
-            "No se encontró el usuario en la respuesta de Supabase"
+            "No se encontró el usuario en la respuesta de Supabase",
           );
           return;
         }
@@ -92,6 +93,11 @@ export default function LoginScreen({ navigation }) {
     </View>
   );
 }
+LoginScreen.propTypes = {
+  navigation: PropTypes.shape({
+    replace: PropTypes.func.isRequired,
+  }).isRequired,
+};
 
 const styles = StyleSheet.create({
   container: {

@@ -8,9 +8,10 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
-  SafeAreaView,
 } from "react-native";
 import { supabase } from "../services/supabase";
+import PropTypes from "prop-types";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const STATUS_COLORS = {
   [EventTypes.CHECK_IN]: "#81C27A",
@@ -19,12 +20,12 @@ const STATUS_COLORS = {
   [EventTypes.CHECK_OUT]: "#D4F4FA",
   default: "#F8F9FA",
 };
-
 export default function DashboardScreen({ route }) {
   const { userId, username } = route.params;
   const [currentEventType, setCurrentEventType] = useState(null);
   const [loading, setLoading] = useState(true);
   const [bgColor, setBgColor] = useState(STATUS_COLORS.default);
+  const insets = useSafeAreaInsets();
 
   const updateStatus = useCallback(async () => {
     try {
@@ -41,7 +42,7 @@ export default function DashboardScreen({ route }) {
       const latestType = data?.[0]?.type;
       setCurrentEventType(latestType);
       setBgColor(
-        latestType ? STATUS_COLORS[latestType] : STATUS_COLORS.default
+        latestType ? STATUS_COLORS[latestType] : STATUS_COLORS.default,
       );
     } catch (error) {
       Alert.alert("Error", error.message);
@@ -83,7 +84,7 @@ export default function DashboardScreen({ route }) {
           table: "events",
           filter: `user_id=eq.${userId}`,
         },
-        updateStatus
+        updateStatus,
       )
       .subscribe();
 
@@ -96,19 +97,6 @@ export default function DashboardScreen({ route }) {
     switch (currentEventType) {
       case EventTypes.CHECK_IN:
       case EventTypes.BREAK_END:
-        return (
-          <>
-            <ActionButton
-              text={EventNames.BREAK_START}
-              onPress={() => handleEvent(EventTypes.BREAK_START)}
-            />
-            <ActionButton
-              text={EventNames.CHECK_OUT}
-              onPress={() => handleEvent(EventTypes.CHECK_OUT)}
-              secondary
-            />
-          </>
-        );
         return (
           <>
             <ActionButton
@@ -140,12 +128,18 @@ export default function DashboardScreen({ route }) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: bgColor }]}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Hello, {username}! 👋 </Text>
-        <View style={styles.actionsContainer}>{renderActionButton()}</View>
-      </View>
-    </SafeAreaView>
+    <View
+      style={{
+        paddingTop: insets.top + 30,
+        paddingBottom: insets.bottom + 20,
+        paddingHorizontal: 20,
+        backgroundColor: bgColor,
+        ...styles.content,
+      }}
+    >
+      <Text style={styles.title}>Hello, {username}! 👋 </Text>
+      <View style={styles.actionsContainer}>{renderActionButton()}</View>
+    </View>
   );
 }
 
@@ -160,14 +154,24 @@ const ActionButton = ({ text, onPress, secondary = false }) => (
     <Text style={styles.buttonText}>{text}</Text>
   </TouchableOpacity>
 );
+ActionButton.propTypes = {
+  text: PropTypes.string.isRequired,
+  onPress: PropTypes.func.isRequired,
+  secondary: PropTypes.bool,
+};
+
+DashboardScreen.propTypes = {
+  route: PropTypes.shape({
+    params: PropTypes.shape({
+      userId: PropTypes.string.isRequired,
+      username: PropTypes.string.isRequired,
+    }).isRequired,
+  }).isRequired,
+};
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   content: {
     flex: 1,
-    padding: 20,
     justifyContent: "space-between",
   },
   title: {
