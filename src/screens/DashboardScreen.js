@@ -21,10 +21,15 @@ export default function DashboardScreen({ route }) {
   const renderActionButton = () => {
     if (loading) return <ActivityIndicator size="large" />;
 
-    switch (currentEventType) {
-      case EventTypes.CHECK_IN:
-      case EventTypes.BREAK_END:
-        return (
+    const isWorking =
+      currentEventType === EventTypes.CHECK_IN ||
+      currentEventType === EventTypes.BREAK_END;
+    const isBreaking = currentEventType === EventTypes.BREAK_START;
+    const isIdle = !isWorking && !isBreaking;
+
+    return (
+      <>
+        {isWorking && (
           <>
             <ActionButton
               text={EventNames.BREAK_START}
@@ -36,22 +41,21 @@ export default function DashboardScreen({ route }) {
               secondary
             />
           </>
-        );
-      case EventTypes.BREAK_START:
-        return (
+        )}
+        {isBreaking && (
           <ActionButton
             text={EventNames.BREAK_END}
             onPress={() => handleEvent(EventTypes.BREAK_END)}
           />
-        );
-      default:
-        return (
+        )}
+        {isIdle && (
           <ActionButton
             text={EventNames.CHECK_IN}
             onPress={() => handleEvent(EventTypes.CHECK_IN)}
           />
-        );
-    }
+        )}
+      </>
+    );
   };
 
   return (
