@@ -4,9 +4,14 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import LoginScreen from "../screens/LoginScreen";
 import DashboardScreen from "../screens/DashboardScreen";
 
-const Stack = createNativeStackNavigator();
+export type RootStackParamList = {
+  Login: undefined;
+  Dashboard: { userId: string; username: string };
+};
 
-export default function Navigator() {
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
+export default function Navigator(): JSX.Element {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login">

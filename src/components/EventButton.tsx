@@ -1,8 +1,22 @@
 import React from "react";
-import { TouchableOpacity, Text, StyleSheet } from "react-native";
-import PropTypes from "prop-types";
+import {
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  GestureResponderEvent,
+} from "react-native";
 
-const EventButton = ({ text, onPress, secondary = false }) => {
+interface EventButtonProps {
+  text: string;
+  onPress: (event: GestureResponderEvent) => void;
+  secondary?: boolean;
+}
+
+const EventButton: React.FC<EventButtonProps> = ({
+  text,
+  onPress,
+  secondary = false,
+}) => {
   return (
     <TouchableOpacity
       style={[
@@ -14,12 +28,6 @@ const EventButton = ({ text, onPress, secondary = false }) => {
       <Text style={styles.buttonText}>{text}</Text>
     </TouchableOpacity>
   );
-};
-
-EventButton.propTypes = {
-  text: PropTypes.string.isRequired,
-  onPress: PropTypes.func.isRequired,
-  secondary: PropTypes.bool,
 };
 
 const styles = StyleSheet.create({

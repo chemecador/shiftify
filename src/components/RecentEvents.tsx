@@ -1,14 +1,23 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import PropTypes from "prop-types";
 import ShimmerPlaceHolder from "react-native-shimmer-placeholder";
 import { supabase } from "../services/supabase";
 import { EventNames } from "../utils/eventNames";
 
-const RecentEvents = ({ userId, refreshKey }) => {
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+interface EventRecord {
+  type: string;
+  time: string;
+}
+
+interface RecentEventsProps {
+  userId: string | number;
+  refreshKey: number;
+}
+
+const RecentEvents: React.FC<RecentEventsProps> = ({ userId, refreshKey }) => {
+  const [events, setEvents] = useState<EventRecord[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -39,9 +48,13 @@ const RecentEvents = ({ userId, refreshKey }) => {
         .limit(8);
 
       if (error) throw error;
-      setEvents(data);
-    } catch (err) {
-      setError(err.message);
+      setEvents(data || []);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }
@@ -56,8 +69,8 @@ const RecentEvents = ({ userId, refreshKey }) => {
       <Text style={styles.title}>Today&apos;s Events</Text>
       {loading ? (
         <>
-          <ShimmerPlaceHolder style={styles.shimmerRow} autoRun={true} />
-          <ShimmerPlaceHolder style={styles.shimmerRow} autoRun={true} />
+          <ShimmerPlaceHolder style={styles.shimmerRow} />
+          <ShimmerPlaceHolder style={styles.shimmerRow} />
         </>
       ) : error ? (
         <Text style={styles.error}>Error: {error}</Text>
@@ -67,7 +80,9 @@ const RecentEvents = ({ userId, refreshKey }) => {
         events.map((event, index) => (
           <View key={index} style={styles.item}>
             <Text style={styles.eventText}>
-              {EventNames[event.type.toUpperCase()] || event.type}
+              {EventNames[
+                event.type.toUpperCase() as keyof typeof EventNames
+              ] || event.type}
             </Text>
             <Text style={styles.timeText}>
               {new Date(event.time).toLocaleTimeString([], {
@@ -80,11 +95,6 @@ const RecentEvents = ({ userId, refreshKey }) => {
       )}
     </View>
   );
-};
-
-RecentEvents.propTypes = {
-  userId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  refreshKey: PropTypes.number.isRequired,
 };
 
 const styles = StyleSheet.create({

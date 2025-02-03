@@ -7,31 +7,35 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
-import PropTypes from "prop-types";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import useDashboard from "../hooks/useDashboard";
-import { EventTypes } from "../utils/eventTypes";
+import { EventTypes, type EventType } from "../utils/eventTypes";
 import { EventNames } from "../utils/eventNames";
 import RecentEvents from "../components/RecentEvents";
 import EventButton from "../components/EventButton";
+import { RootStackParamList } from "../navigation/Navigator";
 
-export default function DashboardScreen({ route }) {
-  const { userId, username } = route.params;
+type DashboardScreenProps = NativeStackScreenProps<
+  RootStackParamList,
+  "Dashboard"
+>;
+
+function DashboardScreen({ route, navigation }: DashboardScreenProps) {
+  const { userId, username } = route.params!;
   const {
     currentEventType,
     loading,
     bgColor,
     handleEvent: handleDashboardEvent,
   } = useDashboard(userId);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshKey, setRefreshKey] = useState<number>(0);
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
 
   const handleLogout = () => {
     navigation.replace("Login");
   };
 
-  const handleEvent = async (eventType) => {
+  const handleEvent = async (eventType: EventType) => {
     await handleDashboardEvent(eventType);
     setRefreshKey((prev) => prev + 1);
   };
@@ -100,15 +104,6 @@ export default function DashboardScreen({ route }) {
   );
 }
 
-DashboardScreen.propTypes = {
-  route: PropTypes.shape({
-    params: PropTypes.shape({
-      userId: PropTypes.string.isRequired,
-      username: PropTypes.string.isRequired,
-    }).isRequired,
-  }).isRequired,
-};
-
 const styles = StyleSheet.create({
   content: {
     flex: 1,
@@ -150,3 +145,5 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
+
+export default DashboardScreen;

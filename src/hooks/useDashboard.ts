@@ -1,9 +1,11 @@
 import { useState, useCallback, useEffect } from "react";
 import { Alert } from "react-native";
 import { supabase } from "../services/supabase";
-import { EventTypes } from "../utils/eventTypes";
+import { EventTypes, type EventType } from "../utils/eventTypes";
 
-const STATUS_COLORS = {
+type UserId = string | number;
+
+const STATUS_COLORS: { [key in EventType]?: string } & { default: string } = {
   [EventTypes.CHECK_IN]: "#81C27A",
   [EventTypes.BREAK_START]: "#CCC185",
   [EventTypes.BREAK_END]: "#81C27A",
@@ -11,10 +13,12 @@ const STATUS_COLORS = {
   default: "#F8F9FA",
 };
 
-export default function useDashboard(userId) {
-  const [currentEventType, setCurrentEventType] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [bgColor, setBgColor] = useState(STATUS_COLORS.default);
+export default function useDashboard(userId: UserId) {
+  const [currentEventType, setCurrentEventType] = useState<EventType | null>(
+    null,
+  );
+  const [loading, setLoading] = useState<boolean>(true);
+  const [bgColor, setBgColor] = useState<string>(STATUS_COLORS.default);
 
   const updateStatus = useCallback(async () => {
     try {
@@ -28,19 +32,25 @@ export default function useDashboard(userId) {
 
       if (error) throw error;
 
-      const latestType = data?.[0]?.type;
-      setCurrentEventType(latestType);
+      const latestType: EventType | undefined = data && data[0]?.type;
+      setCurrentEventType(latestType || null);
       setBgColor(
-        latestType ? STATUS_COLORS[latestType] : STATUS_COLORS.default,
+        latestType
+          ? STATUS_COLORS[latestType] || STATUS_COLORS.default
+          : STATUS_COLORS.default,
       );
-    } catch (error) {
-      Alert.alert("Error", error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        Alert.alert("Error", error.message);
+      } else {
+        Alert.alert("Error", "An unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }
   }, [userId]);
 
-  const handleEvent = async (eventType) => {
+  const handleEvent = async (eventType: EventType) => {
     try {
       setLoading(true);
       const { error } = await supabase.from("events").insert([
@@ -53,8 +63,12 @@ export default function useDashboard(userId) {
 
       if (error) throw error;
       await updateStatus();
-    } catch (error) {
-      Alert.alert("Error", error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        Alert.alert("Error", error.message);
+      } else {
+        Alert.alert("Error", "An unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }

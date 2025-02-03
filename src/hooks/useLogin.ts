@@ -1,11 +1,15 @@
 import { useState } from "react";
 import { Alert } from "react-native";
 import { supabase } from "../services/supabase";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../navigation/Navigator";
 
-export default function useLogin(navigation) {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, "Login">;
+
+export default function useLogin(navigation: NavigationProp) {
+  const [username, setUsername] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleLogin = async () => {
     if (username.trim() === "" || password.trim() === "") {
@@ -45,7 +49,7 @@ export default function useLogin(navigation) {
           username,
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
       Alert.alert("Error", "An unexpected error occurred.");
     } finally {

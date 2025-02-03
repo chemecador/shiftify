@@ -7,10 +7,13 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
-import PropTypes from "prop-types";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../navigation/Navigator";
 import useLogin from "../hooks/useLogin";
 
-export default function LoginScreen({ navigation }) {
+type LoginScreenProps = NativeStackScreenProps<RootStackParamList, "Login">;
+
+function LoginScreen({ navigation }: LoginScreenProps) {
   const { username, setUsername, password, setPassword, loading, handleLogin } =
     useLogin(navigation);
 
@@ -45,12 +48,6 @@ export default function LoginScreen({ navigation }) {
     </View>
   );
 }
-
-LoginScreen.propTypes = {
-  navigation: PropTypes.shape({
-    replace: PropTypes.func.isRequired,
-  }).isRequired,
-};
 
 const styles = StyleSheet.create({
   container: {
@@ -91,3 +88,5 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 });
+
+export default LoginScreen;
