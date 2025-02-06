@@ -12,11 +12,7 @@ interface EventButtonProps {
   secondary?: boolean;
 }
 
-const EventButton: React.FC<EventButtonProps> = ({
-  text,
-  onPress,
-  secondary = false,
-}) => {
+function EventButton({ text, onPress, secondary = false }: EventButtonProps) {
   return (
     <TouchableOpacity
       style={[
@@ -28,7 +24,7 @@ const EventButton: React.FC<EventButtonProps> = ({
       <Text style={styles.buttonText}>{text}</Text>
     </TouchableOpacity>
   );
-};
+}
 
 const styles = StyleSheet.create({
   button: {

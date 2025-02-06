@@ -1,20 +1,33 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import ShimmerPlaceHolder from "react-native-shimmer-placeholder";
 import useRecentEvents, { EventRecord } from "../hooks/useRecentEvents";
 import { EventNames } from "../utils/eventNames";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
 
 interface RecentEventsProps {
   userId: string | number;
   refreshKey: number;
 }
-
 function RecentEvents({ userId, refreshKey }: RecentEventsProps) {
+  type RootStackParamList = {
+    EventScreen: undefined;
+  };
+
   const { events, loading, error } = useRecentEvents(userId, refreshKey);
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Today&apos;s Events</Text>
+      {/* Header interno con título y botón "See all" */}
+      <View style={styles.header}>
+        <Text style={styles.title}>Today's Events</Text>
+        <TouchableOpacity onPress={() => navigation.navigate("EventScreen")}>
+          <Text style={styles.seeAll}>See all</Text>
+        </TouchableOpacity>
+      </View>
+
       {loading ? (
         <>
           <ShimmerPlaceHolder style={styles.shimmerRow} />
@@ -56,10 +69,19 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
   title: {
     fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 10,
+  },
+  seeAll: {
+    fontSize: 14,
+    color: "#007BFF",
   },
   error: {
     color: "red",
