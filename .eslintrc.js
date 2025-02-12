@@ -20,8 +20,8 @@ module.exports = {
     "prettier/prettier": "error",
     "import/no-unresolved": "off",
     "comma-dangle": ["error", "always-multiline"],
-    "react/react-in-jsx-scope": "off", // No es necesario importar React en archivos JSX con la nueva transformación
-    "no-undef": "off", // Evita errores sobre JSX no definido
+    "react/react-in-jsx-scope": "off",
+    "no-undef": "off",
   },
   ignorePatterns: ["/dist/*"],
   settings: {
