@@ -12,7 +12,7 @@ interface RecentEventsProps {
 }
 function RecentEvents({ userId, refreshKey }: RecentEventsProps) {
   type RootStackParamList = {
-    EventScreen: undefined;
+    EventsScreen: { userId: string | number };
   };
 
   const { events, loading, error } = useRecentEvents(userId, refreshKey);
@@ -20,10 +20,11 @@ function RecentEvents({ userId, refreshKey }: RecentEventsProps) {
 
   return (
     <View style={styles.container}>
-      {/* Header interno con título y botón "See all" */}
       <View style={styles.header}>
         <Text style={styles.title}>Today's Events</Text>
-        <TouchableOpacity onPress={() => navigation.navigate("EventScreen")}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("EventsScreen", { userId })}
+        >
           <Text style={styles.seeAll}>See all</Text>
         </TouchableOpacity>
       </View>

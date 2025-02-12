@@ -2,11 +2,11 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import LoginScreen from "../screens/LoginScreen";
 import DashboardScreen from "../screens/DashboardScreen";
-import EventScreen from "../screens/EventsScreen";
+import EventsScreen from "../screens/EventsScreen";
 export type RootStackParamList = {
   Login: undefined;
   Dashboard: { userId: string; username: string };
-  EventScreen: undefined;
+  EventsScreen: { userId: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -26,8 +26,8 @@ export default function Navigator(): JSX.Element {
           options={{ headerShown: false }}
         />
         <Stack.Screen
-          name="EventScreen"
-          component={EventScreen}
+          name="EventsScreen"
+          component={EventsScreen}
           options={{ title: "Events", headerBackTitle: "Back" }}
         />
       </Stack.Navigator>
